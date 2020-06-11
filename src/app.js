@@ -18,6 +18,10 @@ app.use(morgan(morganOption));
 app.use(cors());
 app.use(helmet());
 
+app.get('/bookmarks', (req, res, next) => {
+  res.send('All bookmarks');
+});
+ 
 app.use(function validateBearerToken(req, res, next) {
   const apiToken = API_TOKEN;
   const authToken = req.get('Authorization');
