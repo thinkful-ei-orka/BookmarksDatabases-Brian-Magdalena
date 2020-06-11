@@ -1,4 +1,5 @@
 const express = require('express');
+const BookmarkService = require('../bookmark-service')
 const bookmarks = require('../store');
 const logger = require('../logger');
 const { v4: uuid } = require('uuid');
@@ -10,31 +11,35 @@ const bodyParser = express.json();
 bookmarkRouter
   .route('/bookmarks')
   .get((req, res) => {
-    res
-      .json(bookmarks);
+    const knexInstance = req.app.get('db')
+    BookmarkService.getAllItems(knexInstance)
+      .then(articles => {
+        res.json(articles)
+      })
+      .catch(next)
   })
   .post(bodyParser, (req, res) => {
-    const { title, url, desc='', rating=0 } = req.body;
+    const { title, url, desc = '', rating = 0 } = req.body;
 
-    if(!title) {
+    if (!title) {
       logger.error(`Title is required`);
-      return res 
+      return res
         .status(400)
         .send('Invalid data')
     }
-    if(!url) {
+    if (!url) {
       logger.error(`Url is required`);
       return res
         .status(400)
         .send('Invalid data')
     }
-    if(typeof url !== 'string' || url.length <= 0 || !isWebUri(url)) {
+    if (typeof url !== 'string' || url.length <= 0 || !isWebUri(url)) {
       logger.error('Url is not valid');
       return res
         .status(400)
         .send('Invalid data')
     }
-    if(!Number.isInteger(rating) || rating < 0 || rating > 5) {
+    if (!Number.isInteger(rating) || rating < 0 || rating > 5) {
       logger.error(`Invalid rating ${rating}`)
       return res
         .status(400)
@@ -75,13 +80,13 @@ bookmarkRouter
         .send('Bookmark not found');
     }
 
-  res.json(bookmark);
+    res.json(bookmark);
   })
   .delete((req, res) => {
     const { id } = req.params;
     const bookmarkIndex = bookmarks.findIndex(book => book.id == id);
 
-    if(bookmarkIndex === -1) {
+    if (bookmarkIndex === -1) {
       logger.error(`Bookmark with id ${id} not found`);
       return res
         .status(404)
